@@ -1,0 +1,8 @@
+server:
+  port: 26004
+spring:
+  application:
+    name: message-server
+  cloud:
+    nacos:
+      server-addr: localhost:8848

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: server
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        # 命名空间
+        file-extension: yaml
+        namespace: qq-doctor-dev
+        group: server
+      discovery:
+        namespace: qq-doctor-dev
+        group: server
