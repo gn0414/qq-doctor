@@ -4,7 +4,7 @@ spring:
   cloud:
     nacos:
       config:
-        server-addr: localhost:8848
+        server-addr: 10.21.91.245:8848
         # 命名空间
         file-extension: yaml
         namespace: qq-doctor-dev
