@@ -1,8 +1,4 @@
 server:
   port: 26002
-spring:
-  application:
-    name: gateway
-  cloud:
-    nacos:
-      server-addr: localhost:8848
+
+

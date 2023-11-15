@@ -1,8 +1,3 @@
 server:
   port: 26003
-spring:
-  application:
-    name: hospital-server
-  cloud:
-    nacos:
-      server-addr: localhost:8848
+

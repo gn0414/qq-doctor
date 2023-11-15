@@ -1,8 +1,2 @@
 server:
   port: 26007
-spring:
-  application:
-    name: user-server
-  cloud:
-    nacos:
-      server-addr: localhost:8848
