@@ -18,6 +18,7 @@
         <module>tools</module>
         <module>message</module>
         <module>model</module>
+        <module>basedata</module>
     </modules>
 
     <properties>

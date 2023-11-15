@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/article/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/article/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/basedata/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/basedata/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gateway/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gateway/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/hospital/src/main/java" charset="UTF-8" />
