@@ -1,4 +1,4 @@
-package com.qiqiao.model.domain;
+package com.qiqiao.model.basedata.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

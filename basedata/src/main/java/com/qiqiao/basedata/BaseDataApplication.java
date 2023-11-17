@@ -16,3 +16,4 @@ public class BaseDataApplication {
         SpringApplication.run(BaseDataApplication.class,args);
     }
 }
+
