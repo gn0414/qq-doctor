@@ -10,8 +10,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 @SpringBootApplication
 @EnableDiscoveryClient
 public class ArticleApplication {
-
-    @Value("${substr}")
     public static void main(String[] args) {
         SpringApplication.run(ArticleApplication.class,args);
     }
