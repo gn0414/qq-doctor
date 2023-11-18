@@ -1,10 +1,14 @@
 package com.qiqiao.basedata.test;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import com.qiqiao.model.basedata.domain.Disease;
 import org.junit.jupiter.api.Test;
 
 import static com.qiqiao.tools.basedata.BaseDataTools.getFirstLetter;
+import static com.qiqiao.tools.basedata.BaseDataTools.initDisease;
 
 public class CaffeineTest {
 
@@ -29,7 +33,8 @@ public class CaffeineTest {
      * 读取疾病数据集测试并转化为json
      * */
     @Test
-    void getDataFromTxtToJson() {
+    void getDataFromTxtToJson() throws JsonProcessingException {
+
 
     }
     /*
