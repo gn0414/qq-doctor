@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Simon
@@ -15,6 +16,6 @@ import java.util.List;
 public class DiseaseDepartment {
     private static final long serialVersionUID = -3258839839160856613L;
     private String departName;
-    private List<DiseaseInnerDepartment> innerDepartments;
+    private Map<String,Map<String,List<String>>> innerDepart;
 
 }
