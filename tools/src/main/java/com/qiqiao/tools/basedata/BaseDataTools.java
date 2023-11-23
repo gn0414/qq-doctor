@@ -1,12 +1,13 @@
 package com.qiqiao.tools.basedata;
-import com.qiqiao.model.basedata.domain.Disease;
-import com.qiqiao.model.basedata.domain.DiseaseDepartment;
+import com.qiqiao.model.basedata.domain.FirstLevelData;
+import com.qiqiao.model.basedata.domain.SecondLevelData;
+import lombok.Cleanup;
+import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,18 +16,18 @@ import java.util.stream.Collectors;
  */
 public class BaseDataTools {
 
-    public static Disease initDisease(){
-        Disease disease = new Disease();
-        List<DiseaseDepartment> diseaseDepartmentList = new ArrayList<>();
-        disease.setDepartments(diseaseDepartmentList);
-        String directoryPath = "C:\\Users\\Simon\\Desktop\\qq-doctor-project\\data\\disease";
-        File directory = new File(directoryPath);
+    //SecondLevelData
+
+    public static FirstLevelData initLevelData(String url){
+        FirstLevelData firstLevelData = new FirstLevelData();
+        List<SecondLevelData> secondLevelDataList = new ArrayList<>();
+        firstLevelData.setSecondLevelDataList(secondLevelDataList);
+        File directory = new File(url);
         File[] fileList = directory.listFiles();
-        for (File file : fileList) {
-            diseaseDepartmentList.add(getFileDepartment(file));
+        for (File file : Objects.requireNonNull(fileList)) {
+            secondLevelDataList.add(getSecondLevel(file));
         }
-        disease.setDepartments(diseaseDepartmentList);
-        return disease;
+        return firstLevelData;
     }
 
     public static String getFirstLetter(String word) {
@@ -49,87 +50,126 @@ public class BaseDataTools {
         return "#";
     }
 
-    public static DiseaseDepartment getFileDepartment(File file) {
-        DiseaseDepartment department = new DiseaseDepartment();
-        department.setDepartName(file.getName().substring(0, file.getName().length() - 4));
-        department.setInnerDepart(new HashMap<>());
-        Map<String, Map<String, List<String>>> innerDepart = new HashMap<>();
-        Map<String, List<String>> indexMap = new HashMap<>();
-        List<String> keyList = new ArrayList<>();
-        List<Map<String, List<String>>> valueList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line = br.readLine();
-            if (line == null) {
-                return department;
-            }
-            if (line.charAt(line.length() - 1) != '：') {
-                while ((line = br.readLine()) != null){
-                    String firstLetter = getFirstLetter(line);
-                    if (indexMap.containsKey(firstLetter)) {
-                        List<String> strings = indexMap.get(firstLetter);
-                        strings.add(line);
-                    } else {
-                        List<String> list = new ArrayList<>();
-                        list.add(line);
-                        indexMap.put(firstLetter, list);
-                    }
-                }
-                Map<String, List<String>> sortedMap = indexMap.entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
-                        .collect(
-                                Collectors.toMap(
-                                        Map.Entry::getKey,
-                                        Map.Entry::getValue,
-                                        (oldVal, newVal) -> oldVal,
-                                        LinkedHashMap::new
-                                )
-                        );
-                innerDepart.put("",sortedMap);
-                department.setInnerDepart(innerDepart);
-            } else {
-                while ((line = br.readLine()) != null) {
-                    if (line.charAt(line.length() - 1) == '：') {
-                        keyList.add(line.substring(0, line.length() - 1));
-                        if (!indexMap.isEmpty()) {
-                            valueList.add(indexMap);
-                            indexMap = new HashMap<>();
-                        }
-                        continue;
-                    }
-                    String firstLetter = getFirstLetter(line);
-                    if (indexMap.containsKey(firstLetter)) {
-                        List<String> strings = indexMap.get(firstLetter);
-                        strings.add(line);
-                    } else {
-                        List<String> list = new ArrayList<>();
-                        list.add(line);
-                        indexMap.put(firstLetter, list);
-                    }
-                }
-                valueList.add(indexMap);
-                for (int i = 0; i < keyList.size(); i++) {
-                    Map<String, List<String>> value = valueList.get(i);
-                    if (value.size() != 0){
-                        Map<String, List<String>> sortedMap = value.entrySet().stream()
-                                .sorted(Map.Entry.comparingByKey())
-                                .collect(
-                                        Collectors.toMap(
-                                                Map.Entry::getKey,
-                                                Map.Entry::getValue,
-                                                (oldVal, newVal) -> oldVal,
-                                                LinkedHashMap::new
-                                        )
-                                );
-                        innerDepart.put(keyList.get(i), sortedMap);
-                    }
-                    innerDepart.put(keyList.get(i),value);
-                }
-                department.setInnerDepart(innerDepart);
-            }
-            return department;
-        } catch (IOException e) {
-            e.printStackTrace();
+    @SneakyThrows
+    public static SecondLevelData getSecondLevel(File file){
+        //获得子级层级数据对象
+        SecondLevelData secondLevelData = new SecondLevelData();
+        //将文件名设置为层级名
+        secondLevelData.setName((file.getName().substring(0, file.getName().length() - 4)));
+        //定义IO流
+        @Cleanup BufferedReader br = new BufferedReader(new FileReader(file));
+        //设置获取的内部内容
+        if (br.readLine() != null) {
+            secondLevelData.setSecondLevel(doGetSecondLevel(br));
         }
-        return department;
+        //返回结果
+        return secondLevelData;
+
+    }
+
+    @SneakyThrows
+    public static Map<String, Map<String, List<String>>> doGetSecondLevel(BufferedReader br){
+        //定义子层级Map
+        Map<String,Map<String,List<String>>> innerSecondLevel;
+        //定义索引Map
+        Map<String,List<String>> innerLevelData;
+        //判断是否有内层级
+        if(br.readLine().charAt(br.readLine().length() - 1) != '：'){
+            innerLevelData = getInnerLevelData(br);
+            innerSecondLevel = Collections.singletonMap("",innerLevelData);
+        }else {
+            innerSecondLevel = getInnerLevelData(br,true);
+        }
+        return innerSecondLevel;
+    }
+    @SneakyThrows
+    public static Map<String,List<String>> getInnerLevelData( BufferedReader br){
+        //索引值Map
+        Map<String,List<String>> innerLevelData = new HashMap<>(26);
+        //读取行内容
+        String line;
+        try {
+            while ((line = br.readLine()) != null){
+                String firstLetter = getFirstLetter(line);
+                //判断是否存在索引的value然后做处理
+                if (innerLevelData.containsKey(firstLetter)){
+                    List<String> valueList = innerLevelData.get(firstLetter);
+                    valueList.add(line);
+                }else{
+                    List<String> valueList = new ArrayList<>(20);
+                    valueList.add(line);
+                    innerLevelData.put(firstLetter,valueList);
+                }
+            }
+            innerLevelData = innerLevelData.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(
+                            Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    Map.Entry::getValue,
+                                    (oldVal, newVal) -> oldVal,
+                                    LinkedHashMap::new
+                            )
+                    );
+        }finally {
+            br.close();
+        }
+        return innerLevelData;
+    }
+
+    @SneakyThrows
+    public static Map<String,Map<String,List<String>>> getInnerLevelData(BufferedReader br,boolean more){
+        //定义子层级Map
+        Map<String,Map<String,List<String>>> innerSecondLevel = new HashMap<>(20);
+        //定义索引Map
+        Map<String,List<String>> innerLevelData = new HashMap<>();
+        //读取行内容
+        String line;
+        //索引列表
+        List<String> keyList = new ArrayList<>(26);
+        //索引列表值
+        List<Map<String,List<String>>> valueList = new ArrayList<>();
+        try {
+            while ((line = br.readLine()) != null) {
+                if (line.charAt(line.length() - 1) == '：') {
+                    keyList.add(line.substring(0, line.length() - 1));
+                    if (!innerLevelData.isEmpty()) {
+                        valueList.add(innerLevelData);
+                        innerLevelData = new HashMap<>();
+                    }
+                    continue;
+                }
+                String firstLetter = getFirstLetter(line);
+                if (innerLevelData.containsKey(firstLetter)) {
+                    List<String> strings = innerLevelData.get(firstLetter);
+                    strings.add(line);
+                } else {
+                    List<String> list = new ArrayList<>();
+                    list.add(line);
+                    innerLevelData.put(firstLetter, list);
+                }
+            }
+            valueList.add(innerLevelData);
+            for (int i = 0; i < keyList.size(); i++) {
+                Map<String, List<String>> value = valueList.get(i);
+                if (!value.isEmpty()) {
+                    Map<String, List<String>> sortedMap = value.entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .collect(
+                                    Collectors.toMap(
+                                            Map.Entry::getKey,
+                                            Map.Entry::getValue,
+                                            (oldVal, newVal) -> oldVal,
+                                            LinkedHashMap::new
+                                    )
+                            );
+                    innerSecondLevel.put(keyList.get(i), sortedMap);
+                }
+                innerSecondLevel.put(keyList.get(i), value);
+            }
+        }finally {
+            br.close();
+        }
+        return innerSecondLevel;
     }
 }

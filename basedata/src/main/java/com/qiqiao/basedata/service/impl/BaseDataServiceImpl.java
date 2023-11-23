@@ -18,7 +18,7 @@ public class BaseDataServiceImpl implements BaseDataService {
         //TODO ok牢弟等下写到Mongo去
         return localCache.get(key,id->{
             System.out.println("没有走缓存");
-           return BaseDataTools.initDisease();
+           return BaseDataTools.initLevelData("");
         });
     }
 

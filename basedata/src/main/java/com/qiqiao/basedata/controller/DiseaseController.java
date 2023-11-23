@@ -1,7 +1,6 @@
 package com.qiqiao.basedata.controller;
 import com.qiqiao.basedata.service.BaseDataService;
 import com.qiqiao.model.Result;
-import com.qiqiao.model.basedata.domain.Disease;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
