@@ -13,3 +13,7 @@ spring:
         server-addr: 10.21.91.245:8848
         namespace: qq-doctor-dev
         group: gateway
+    gateway: #网关配置
+      discovery: #服务发现
+        locator: #资源定位
+          enabled: true #通过服务发现和查找其他微服务

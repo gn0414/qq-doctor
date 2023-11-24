@@ -22,6 +22,8 @@
             <artifactId>pinyin4j</artifactId>
             <version>2.5.1</version>
         </dependency>
+
+
         <!-- 实体类-->
         <dependency>
             <groupId>com.qiqiao</groupId>

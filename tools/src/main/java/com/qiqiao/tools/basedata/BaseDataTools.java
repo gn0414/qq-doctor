@@ -1,5 +1,6 @@
 package com.qiqiao.tools.basedata;
 import com.qiqiao.model.basedata.domain.FirstLevelData;
+import com.qiqiao.model.basedata.domain.IndexLevelData;
 import com.qiqiao.model.basedata.domain.SecondLevelData;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
@@ -16,8 +17,32 @@ import java.util.stream.Collectors;
  */
 public class BaseDataTools {
 
-    //SecondLevelData
-
+    /**
+     * 获取索引数据的方法
+     * @param url 文件夹路径
+     * @return IndexLevelData
+     */
+    @SneakyThrows
+    public static IndexLevelData initIndexData(String url){
+        IndexLevelData indexLevelData = new IndexLevelData();
+        Map<String,List<String>> data = null;
+        File directory = new File(url);
+        File[] fileList = directory.listFiles();
+        assert fileList != null;
+        File file = fileList[0];
+        @Cleanup BufferedReader br = new BufferedReader(new FileReader(file));
+        String line;
+        if ((line = br.readLine()) != null){
+            data = getInnerLevelData(br,line);
+        }
+        indexLevelData.setData(data);
+        return indexLevelData;
+    }
+    /**
+     * 获得顶层数据方法（文件夹多文件）
+     * @param url 文件夹路径
+     * @return FirstLevelData
+     */
     public static FirstLevelData initLevelData(String url){
         FirstLevelData firstLevelData = new FirstLevelData();
         List<SecondLevelData> secondLevelDataList = new ArrayList<>();
@@ -30,6 +55,11 @@ public class BaseDataTools {
         return firstLevelData;
     }
 
+    /**
+     *
+     * @param word 识别语句
+     * @return String
+     */
     public static String getFirstLetter(String word) {
         if (word == null || word.isEmpty()) {
             return "";
@@ -50,6 +80,11 @@ public class BaseDataTools {
         return "#";
     }
 
+    /**
+     *
+     * @param file 读取文件
+     * @return SecondLevelData
+     */
     @SneakyThrows
     public static SecondLevelData getSecondLevel(File file){
         //获得子级层级数据对象
@@ -59,37 +94,54 @@ public class BaseDataTools {
         //定义IO流
         @Cleanup BufferedReader br = new BufferedReader(new FileReader(file));
         //设置获取的内部内容
-        if (br.readLine() != null) {
-            secondLevelData.setSecondLevel(doGetSecondLevel(br));
+        String line;
+        if ((line = br.readLine()) != null) {
+            secondLevelData.setSecondLevel(doGetSecondLevel(br,line));
+        }else {
+            secondLevelData.setSecondLevel(Collections.emptyMap());
         }
         //返回结果
         return secondLevelData;
 
     }
 
+    /**
+     *
+     * @param br 文件流缓冲区
+     * @param line 读取的第一行内容
+     * @return Map<String, Map<String, List<String>>>
+     */
+
     @SneakyThrows
-    public static Map<String, Map<String, List<String>>> doGetSecondLevel(BufferedReader br){
+    public static Map<String, Map<String, List<String>>> doGetSecondLevel(BufferedReader br,String line){
         //定义子层级Map
         Map<String,Map<String,List<String>>> innerSecondLevel;
         //定义索引Map
         Map<String,List<String>> innerLevelData;
         //判断是否有内层级
-        if(br.readLine().charAt(br.readLine().length() - 1) != '：'){
-            innerLevelData = getInnerLevelData(br);
+        if(line.charAt(line.length() - 1) != '：'){
+            System.out.println(line);
+            innerLevelData = getInnerLevelData(br,line);
             innerSecondLevel = Collections.singletonMap("",innerLevelData);
         }else {
-            innerSecondLevel = getInnerLevelData(br,true);
+            innerSecondLevel = getInnerLevelData(br,line ,true);
         }
         return innerSecondLevel;
     }
+
+    /**
+     *
+     * @param br 文件流缓冲区
+     * @param line 判断行内容
+     * @return Map<String,List<String>>
+     */
     @SneakyThrows
-    public static Map<String,List<String>> getInnerLevelData( BufferedReader br){
+    public static Map<String,List<String>> getInnerLevelData( BufferedReader br,String line){
         //索引值Map
         Map<String,List<String>> innerLevelData = new HashMap<>(26);
         //读取行内容
-        String line;
         try {
-            while ((line = br.readLine()) != null){
+            do {
                 String firstLetter = getFirstLetter(line);
                 //判断是否存在索引的value然后做处理
                 if (innerLevelData.containsKey(firstLetter)){
@@ -100,7 +152,7 @@ public class BaseDataTools {
                     valueList.add(line);
                     innerLevelData.put(firstLetter,valueList);
                 }
-            }
+            } while ((line = br.readLine()) != null);
             innerLevelData = innerLevelData.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .collect(
@@ -117,25 +169,31 @@ public class BaseDataTools {
         return innerLevelData;
     }
 
+    /**
+     *
+     * @param br 文件流缓冲区
+     * @param line 判断行内容
+     * @param more 是否有子层
+     * @return Map<String,Map<String,List<String>>>
+     */
+
     @SneakyThrows
-    public static Map<String,Map<String,List<String>>> getInnerLevelData(BufferedReader br,boolean more){
+    public static Map<String,Map<String,List<String>>> getInnerLevelData(BufferedReader br,String line,boolean more){
         //定义子层级Map
         Map<String,Map<String,List<String>>> innerSecondLevel = new HashMap<>(20);
         //定义索引Map
-        Map<String,List<String>> innerLevelData = new HashMap<>();
-        //读取行内容
-        String line;
+        Map<String,List<String>> innerLevelData = new HashMap<>(26);
         //索引列表
         List<String> keyList = new ArrayList<>(26);
         //索引列表值
         List<Map<String,List<String>>> valueList = new ArrayList<>();
         try {
-            while ((line = br.readLine()) != null) {
+            do {
                 if (line.charAt(line.length() - 1) == '：') {
                     keyList.add(line.substring(0, line.length() - 1));
                     if (!innerLevelData.isEmpty()) {
                         valueList.add(innerLevelData);
-                        innerLevelData = new HashMap<>();
+                        innerLevelData = new HashMap<>(26);
                     }
                     continue;
                 }
@@ -148,7 +206,7 @@ public class BaseDataTools {
                     list.add(line);
                     innerLevelData.put(firstLetter, list);
                 }
-            }
+            } while ((line = br.readLine()) != null);
             valueList.add(innerLevelData);
             for (int i = 0; i < keyList.size(); i++) {
                 Map<String, List<String>> value = valueList.get(i);
