@@ -1,7 +1,6 @@
 package com.qiqiao.tools.basedata;
-import com.qiqiao.model.basedata.domain.FirstLevelData;
-import com.qiqiao.model.basedata.domain.IndexLevelData;
-import com.qiqiao.model.basedata.domain.SecondLevelData;
+import com.qiqiao.model.basedata.domain.*;
+import com.qiqiao.model.basedata.finals.BaseDataFinal;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -23,8 +22,13 @@ public class BaseDataTools {
      * @return IndexLevelData
      */
     @SneakyThrows
-    public static IndexLevelData initIndexData(String url){
-        IndexLevelData indexLevelData = new IndexLevelData();
+    public static BaseIndexLevelData initIndexData(String url,String key){
+        BaseIndexLevelData indexLevelData = null;
+        if (key.equals(BaseDataFinal.INSPECT_DATA_KEY)){
+           indexLevelData = new Inspect();
+        }else{
+            indexLevelData = new Treatment();
+        }
         Map<String,List<String>> data = null;
         File directory = new File(url);
         File[] fileList = directory.listFiles();
@@ -43,8 +47,13 @@ public class BaseDataTools {
      * @param url 文件夹路径
      * @return FirstLevelData
      */
-    public static FirstLevelData initLevelData(String url){
-        FirstLevelData firstLevelData = new FirstLevelData();
+    public static BaseFirstLevelData initLevelData(String url, String key){
+        BaseFirstLevelData firstLevelData = null;
+        if (key.equals(BaseDataFinal.DISEASE_DATA_KEY)){
+            firstLevelData = new Disease();
+        }else{
+            firstLevelData = new Vaccine();
+        }
         List<SecondLevelData> secondLevelDataList = new ArrayList<>();
         firstLevelData.setSecondLevelDataList(secondLevelDataList);
         File directory = new File(url);
@@ -120,7 +129,6 @@ public class BaseDataTools {
         Map<String,List<String>> innerLevelData;
         //判断是否有内层级
         if(line.charAt(line.length() - 1) != '：'){
-            System.out.println(line);
             innerLevelData = getInnerLevelData(br,line);
             innerSecondLevel = Collections.singletonMap("",innerLevelData);
         }else {
