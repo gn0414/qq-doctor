@@ -19,6 +19,7 @@
         <module>message</module>
         <module>model</module>
         <module>basedata</module>
+        <module>id-builder</module>
     </modules>
 
     <properties>
