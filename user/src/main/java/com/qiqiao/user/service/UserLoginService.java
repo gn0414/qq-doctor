@@ -1,4 +1,4 @@
-package com.qiqiao.service;
+package com.qiqiao.user.service;
 
 import com.qiqiao.model.Result;
 import com.qiqiao.model.user.vo.CheckLoginForm;
