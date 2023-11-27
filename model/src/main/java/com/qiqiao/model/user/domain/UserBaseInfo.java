@@ -1,4 +1,4 @@
-package com.qiqiao.model.user;
+package com.qiqiao.model.user.domain;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
