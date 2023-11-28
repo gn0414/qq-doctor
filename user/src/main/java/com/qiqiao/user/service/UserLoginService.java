@@ -9,10 +9,10 @@ import com.qiqiao.model.user.vo.CheckLoginForm;
 public interface UserLoginService {
     /**
      * fetch 用户登录顶层抽象
-     * @param checkLoginForm 用户登录表单
+     * @param checkLoginForm 用户登录表单(包含登录方式)
      * @return Result
      */
-    Result<String> login(CheckLoginForm checkLoginForm);
+    Result<Void> login(CheckLoginForm checkLoginForm);
 
 
 }

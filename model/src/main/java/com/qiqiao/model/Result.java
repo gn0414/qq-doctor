@@ -16,8 +16,20 @@ public class Result<T> {
         this.data = data;
     }
 
+    public Result(boolean success, int code, String message){
+        this.success = success;
+        this.code = code;
+        this.message = message;
+    }
+
+
+
     public static <T> Result<T> success(T data) {
         return new Result<>(true, 200, "success", data);
+    }
+
+    public static <T> Result<T> successNoData() {
+        return new Result<>(true, 200, "success");
     }
 
     public static <T> Result<T> failure(int code, String message) {

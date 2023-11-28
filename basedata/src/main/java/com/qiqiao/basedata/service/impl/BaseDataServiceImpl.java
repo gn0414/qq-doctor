@@ -19,6 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.PreDestroy;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 
@@ -65,19 +68,19 @@ public class BaseDataServiceImpl implements BaseDataService {
                         //查mongo
                         Disease disease = diseaseRepository.findAll().get(0);
                         //写转化对象
-                        redisCache(RedisFinals.REDIS_DISEASE_KEY,disease);
+                        redisCache(RedisFinals.REDIS_BASE_DATA_DISEASE_KEY,disease);
                         return disease;
                     }else{
                         Vaccine vaccine = vaccineRepository.findAll().get(0);
-                        redisCache(RedisFinals.REDIS_VACCINE_KEY,vaccine);
+                        redisCache(RedisFinals.REDIS_BASE_DATA_VACCINE_KEY,vaccine);
                         return vaccine;
                     }
                 });
                 //redis无值走caffeine
                 if (BaseDataFinal.DISEASE_DATA_KEY.equals(key)){
-                    redisCache(RedisFinals.REDIS_DISEASE_KEY,data);
+                    redisCache(RedisFinals.REDIS_BASE_DATA_DISEASE_KEY,data);
                 }else{
-                    redisCache(RedisFinals.REDIS_VACCINE_KEY,data);
+                    redisCache(RedisFinals.REDIS_BASE_DATA_VACCINE_KEY,data);
                 }
                 break;
 
@@ -90,18 +93,18 @@ public class BaseDataServiceImpl implements BaseDataService {
                         //查mongo
                         Inspect inspect = inspectRepository.findAll().get(0);
                         //写转化对象
-                        redisCache(RedisFinals.REDIS_INSPECT_KEY,inspect);
+                        redisCache(RedisFinals.REDIS_BASE_DATA_INSPECT_KEY,inspect);
                         return inspect;
                     }
                     Treatment treatment = treatmentRepository.findAll().get(0);
-                    redisCache(RedisFinals.REDIS_TREATMENT_KEY,treatment);
+                    redisCache(RedisFinals.REDIS_BASE_DATA_TREATMENT_KEY,treatment);
                     return treatment;
                 });
                 //redis无值走caffeine
                 if (BaseDataFinal.INSPECT_DATA_KEY.equals(key)){
-                    redisCache(RedisFinals.REDIS_INSPECT_KEY,data);
+                    redisCache(RedisFinals.REDIS_BASE_DATA_INSPECT_KEY,data);
                 }else{
-                    redisCache(RedisFinals.REDIS_TREATMENT_KEY,data);
+                    redisCache(RedisFinals.REDIS_BASE_DATA_TREATMENT_KEY,data);
                 }
                 break;
             default:
@@ -150,5 +153,11 @@ public class BaseDataServiceImpl implements BaseDataService {
     @Autowired
     public void setRedisTemplate(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
+    }
+
+    @PreDestroy
+    public void destroy() throws Exception {
+        //关闭redisTemplate
+        Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().close();
     }
 }

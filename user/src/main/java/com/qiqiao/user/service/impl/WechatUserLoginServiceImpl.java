@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WechatUserLoginServiceImpl implements UserLoginService {
     @Override
-    public Result<String> login(CheckLoginForm checkLoginForm) {
-        return Result.success("微信登录");
+    public Result<Void> login(CheckLoginForm checkLoginForm) {
+        return Result.successNoData();
     }
 }
