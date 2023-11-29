@@ -17,6 +17,10 @@ public class RedisFinals {
 
     public static final String REDIS_USER_CHECK_CODE_VALUE = "USER:CHECK_CODE:VALUE";
     public static final String REDISSON_USER_CHECK_CODE_LOCK = "USER:CHECK_CODE:LOCK";
+
+    public static final String REDIS_USER_LOGIN_TOKEN = "USER:LOGIN:TOKEN";
+
+    public static final int REDIS_USER_LOGIN_TOKEN_EXPIRE_TIME = 30*60;
     public static final int REDIS_BASEDATA_EXPIRE_TIME = 30*60;
 
     public static final int REDIS_USER_CHECK_CODE_EXPIRE = 5*60;

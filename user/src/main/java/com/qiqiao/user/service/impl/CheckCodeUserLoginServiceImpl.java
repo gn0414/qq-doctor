@@ -9,6 +9,7 @@ import com.qiqiao.model.user.vo.CheckLoginForm;
 import com.qiqiao.tools.common.VerificationCodeGenerator;
 import com.qiqiao.tools.user.UserTools;
 import com.qiqiao.user.service.UserLoginService;
+import com.qiqiao.user.util.JwtUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
@@ -41,18 +42,47 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
     @Resource
     private  RabbitTemplate rabbitTemplate;
 
+    private final JwtUtil jwtUtil;
+
     private final RedisTemplate<String, String> redisTemplate;
 
     private final RedissonClient redissonClient;
 
-    public CheckCodeUserLoginServiceImpl(RedisTemplate<String, String> redisTemplate, RedissonClient redissonClient) {
+
+    public CheckCodeUserLoginServiceImpl(RedisTemplate<String, String> redisTemplate, RedissonClient redissonClient,JwtUtil jwtUtil) {
         this.redisTemplate = redisTemplate;
         this.redissonClient = redissonClient;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
     public Result<Void> login(CheckLoginForm checkLoginForm) {
-        return Result.successNoData();
+        String phone = checkLoginForm.getPhone();
+        String checkCode = checkLoginForm.getCheckCode();
+        //校验手机号
+        if (UserTools.isValidPhone(phone)){
+            return Result.failure(
+                    ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getStatusCode(),
+                    ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getMessage());
+        }
+        if (!UserTools.isValidCheckCode(checkCode)){
+            return Result.failure(
+                    ErrorEnums.USER_LOGIN_CHECK_CODE_NOT_VALID.getStatusCode(),
+                    ErrorEnums.USER_LOGIN_CHECK_CODE_NOT_VALID.getMessage()
+            );
+        }
+        //
+        String phoneValueKey = RedisFinals.REDIS_USER_CHECK_CODE_VALUE+phone;
+        String phoneValueValue = redisTemplate.opsForValue().get(phoneValueKey);
+        if (checkCode.equals(phoneValueValue)){
+            //校验成功先查数据库是否有该手机号记录
+
+
+        }
+        return Result.failure(
+                ErrorEnums.USER_LOGIN_CHECK_CODE_FAIL.getStatusCode(),
+                ErrorEnums.USER_LOGIN_CHECK_CODE_FAIL.getMessage()
+        );
     }
 
     /**
@@ -62,7 +92,7 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
      */
     public Result<Void> sendCheckCode(String phone, HttpServletRequest request){
         //校验手机号的合理性
-        if (!UserTools.isValidPhone(phone)) {
+        if (UserTools.isValidPhone(phone)) {
             return Result.failure(
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getStatusCode(),
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getMessage());

@@ -9,15 +9,18 @@ public enum ErrorEnums {
     /**
      * 登录方式类型不存在,也就是表单的Type有错误
      */
-    USER_LOGIN_WAY_NOT_FUND(201,"Login Type Error:Please Check Your Type"),
+    USER_LOGIN_WAY_NOT_FUND(201,"登陆方式错误,请选择已有的登陆方式"),
 
-    USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID(202,"Phone Not Valid:Please Check Your Phone Number"),
+    USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID(202,"您输入的手机号不合法,请检查您的手机号"),
 
-    USER_LOGIN_CHECK_CODE_IP_MAX(203,"This IP Get Too MUCH Message:Please Try After 24H"),
+    USER_LOGIN_CHECK_CODE_IP_MAX(203,"您的IP获取了太多短信,请在24小时后重试"),
 
-    USER_LOGIN_CHECK_CODE_EXPIRE(204,"Your Code Is Not Expire:Please Wait 5 Minutes"),
+    USER_LOGIN_CHECK_CODE_EXPIRE(204,"您的验证码未过期,请在5分钟后重试"),
 
-    INTERNET_Error(500,"Internet Error:Please Try later");
+    USER_LOGIN_CHECK_CODE_NOT_VALID(205,"您输入的验证码不合法,请检查您的验证码"),
+
+    USER_LOGIN_CHECK_CODE_FAIL(206,"您输入的验证码不正确,登陆失败"),
+    INTERNET_Error(500,"网络异常,请稍后重试~");
     private final int statusCode;
     private final String message;
 
