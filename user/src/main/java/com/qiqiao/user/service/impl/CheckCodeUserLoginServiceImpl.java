@@ -1,13 +1,19 @@
 package com.qiqiao.user.service.impl;
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qiqiao.model.Result;
 import com.qiqiao.model.enums.ErrorEnums;
 import com.qiqiao.model.finals.RabbitFinals;
 import com.qiqiao.model.finals.RedisFinals;
 import com.qiqiao.model.messagqueue.MessageVo;
+import com.qiqiao.model.user.domain.UserBaseInfo;
 import com.qiqiao.model.user.vo.CheckLoginForm;
+import com.qiqiao.model.user.vo.UserBaseInfoToken;
+import com.qiqiao.tools.common.RandomNameGenerator;
 import com.qiqiao.tools.common.VerificationCodeGenerator;
 import com.qiqiao.tools.user.UserTools;
+import com.qiqiao.user.mapper.UserBaseInfoMapper;
 import com.qiqiao.user.service.UserLoginService;
 import com.qiqiao.user.util.JwtUtil;
 import org.redisson.api.RLock;
@@ -20,6 +26,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +37,13 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class CheckCodeUserLoginServiceImpl implements UserLoginService{
+
+    @Value("${jwt.secret}")
+    private String tokenSecret;
+
+    @Value("${jwt.expiration}")
+    private long tokenExpiration;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckCodeUserLoginServiceImpl.class);
     private static final int SEND_MSG_MAX_TIME = 30;
     private static final int IP_MAX_NUM = 10;
@@ -42,21 +57,22 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
     @Resource
     private  RabbitTemplate rabbitTemplate;
 
-    private final JwtUtil jwtUtil;
+    @Resource
+    private UserBaseInfoMapper userBaseInfoMapper;
+
 
     private final RedisTemplate<String, String> redisTemplate;
 
     private final RedissonClient redissonClient;
 
 
-    public CheckCodeUserLoginServiceImpl(RedisTemplate<String, String> redisTemplate, RedissonClient redissonClient,JwtUtil jwtUtil) {
+    public CheckCodeUserLoginServiceImpl(RedisTemplate<String, String> redisTemplate, RedissonClient redissonClient) {
         this.redisTemplate = redisTemplate;
         this.redissonClient = redissonClient;
-        this.jwtUtil = jwtUtil;
     }
 
     @Override
-    public Result<Void> login(CheckLoginForm checkLoginForm) {
+    public Result<Void> login(CheckLoginForm checkLoginForm, HttpServletResponse response) {
         String phone = checkLoginForm.getPhone();
         String checkCode = checkLoginForm.getCheckCode();
         //校验手机号
@@ -74,10 +90,50 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
         //
         String phoneValueKey = RedisFinals.REDIS_USER_CHECK_CODE_VALUE+phone;
         String phoneValueValue = redisTemplate.opsForValue().get(phoneValueKey);
+        String token = null;
         if (checkCode.equals(phoneValueValue)){
             //校验成功先查数据库是否有该手机号记录
-
-
+            QueryWrapper<UserBaseInfo> queryPhoneWrapper = new QueryWrapper<>();
+            queryPhoneWrapper.eq("phone",phone);
+            UserBaseInfo selectInfo = userBaseInfoMapper.selectOne(queryPhoneWrapper);
+            UserBaseInfoToken userBaseInfoToken = new UserBaseInfoToken();
+            if (selectInfo == null){
+                //封装一个UserBaseInfo基础数据
+                //TODO 后面还会有具体信息表,所以后面还会插入一个具体信息表
+                UserBaseInfo userBaseInfo = new UserBaseInfo();
+                //这里涉及到服务远程调用了,先不写(id应该是雪花id)
+                userBaseInfoToken.setId(1L);
+                userBaseInfoToken.setPhone(phone);
+                userBaseInfoToken.setNickName("QQYJ_"+ RandomNameGenerator.generateRandomName());
+                userBaseInfo.setId(1L);
+                userBaseInfo.setPhone(phone);
+                userBaseInfo.setNiceName("QQYJ_"+ RandomNameGenerator.generateRandomName());
+                //插入数据库
+                userBaseInfoMapper.insert(userBaseInfo);
+            }
+            Optional.ofNullable(selectInfo)
+                    .ifPresent(s -> {
+                        userBaseInfoToken.setId(s.getId());
+                        userBaseInfoToken.setIcon(s.getIcon());
+                        userBaseInfoToken.setNickName(s.getNiceName());
+                        userBaseInfoToken.setWechatNum(s.getWechatNum());
+                        userBaseInfoToken.setPhone(s.getPhone());
+                    });
+            //Token数据体写完就写入redis
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JwtUtil jwtUtil = new JwtUtil(tokenSecret,tokenExpiration);
+                token = jwtUtil.generateToken(phone);
+                redisTemplate.opsForValue().set(RedisFinals.REDIS_USER_LOGIN_TOKEN+token,
+                        objectMapper.writeValueAsString(userBaseInfoToken),RedisFinals.REDIS_USER_LOGIN_TOKEN_EXPIRE_TIME,
+                        TimeUnit.SECONDS);
+            } catch (JsonProcessingException e) {
+                LOGGER.error("CheckCodeUserServiceImpl:110:User Trans Json Error");
+            }
+            if (token != null) {
+                response.setHeader("Authorization", token);
+            }
+            return Result.successNoData();
         }
         return Result.failure(
                 ErrorEnums.USER_LOGIN_CHECK_CODE_FAIL.getStatusCode(),

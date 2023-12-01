@@ -5,6 +5,8 @@ import com.qiqiao.model.user.vo.CheckLoginForm;
 import com.qiqiao.user.service.UserLoginService;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * @author Simon
  * 微信登录实现类
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WechatUserLoginServiceImpl implements UserLoginService {
     @Override
-    public Result<Void> login(CheckLoginForm checkLoginForm) {
+    public Result<Void> login(CheckLoginForm checkLoginForm, HttpServletResponse response) {
         return Result.successNoData();
     }
 }

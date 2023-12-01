@@ -3,6 +3,7 @@ package com.qiqiao.model.user.domain;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.util.Date;
 
@@ -12,6 +13,7 @@ import java.util.Date;
  * 注意我们的数据库表的id一定要是我们的bigint类型
  */
 @TableName("user_base_info")
+@Data
 public class UserBaseInfo {
     @TableId
     private Long id;

@@ -3,6 +3,8 @@ package com.qiqiao.user.service;
 import com.qiqiao.model.Result;
 import com.qiqiao.model.user.vo.CheckLoginForm;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * @author Simon
  */
@@ -12,7 +14,7 @@ public interface UserLoginService {
      * @param checkLoginForm 用户登录表单(包含登录方式)
      * @return Result
      */
-    Result<Void> login(CheckLoginForm checkLoginForm);
 
 
+    Result<Void> login(CheckLoginForm checkLoginForm, HttpServletResponse response);
 }

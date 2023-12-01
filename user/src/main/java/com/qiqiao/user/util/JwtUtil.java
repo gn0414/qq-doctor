@@ -14,13 +14,15 @@ import java.util.Date;
 /**
  * @author Simon
  */
-@Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String secret;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+    private final String secret;
+    private final long expiration;
+
+    public JwtUtil(String secret,long expiration){
+        this.secret = secret;
+        this.expiration = expiration;
+    }
 
 
     public String generateToken(String username) {

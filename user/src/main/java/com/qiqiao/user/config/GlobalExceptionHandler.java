@@ -1,5 +1,6 @@
 package com.qiqiao.user.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.qiqiao.model.Result;
 import com.qiqiao.model.enums.ErrorEnums;
 import com.qiqiao.user.exception.LoginTypeErrorException;
@@ -16,6 +17,4 @@ public class GlobalExceptionHandler {
     public Result<Void> handleLoginTypeErrorException(LoginTypeErrorException loginTypeErrorException){
         return Result.failure(ErrorEnums.USER_LOGIN_WAY_NOT_FUND.getStatusCode(), ErrorEnums.USER_LOGIN_WAY_NOT_FUND.getMessage());
     }
-
-
 }
