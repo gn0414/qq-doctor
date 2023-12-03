@@ -20,6 +20,11 @@ public enum ErrorEnums {
     USER_LOGIN_CHECK_CODE_NOT_VALID(205,"您输入的验证码不合法,请检查您的验证码"),
 
     USER_LOGIN_CHECK_CODE_FAIL(206,"您输入的验证码不正确,登陆失败"),
+
+    USER_LOGIN_ONLINE(207,"对不起您已在线,只能登录一次"),
+    USER_LOGIN_BAN(208,"对不起您的账户已被封禁,请联系管理员"),
+
+    USER_LOGIN_PASSWORD_ERROR(209,"对不起您的密码有误"),
     INTERNET_Error(500,"网络异常,请稍后重试~");
     private final int statusCode;
     private final String message;

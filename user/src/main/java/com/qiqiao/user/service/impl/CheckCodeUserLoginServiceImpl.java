@@ -4,12 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qiqiao.model.Result;
 import com.qiqiao.model.enums.ErrorEnums;
+import com.qiqiao.model.finals.CommonFinals;
 import com.qiqiao.model.finals.RabbitFinals;
 import com.qiqiao.model.finals.RedisFinals;
 import com.qiqiao.model.messagqueue.MessageVo;
 import com.qiqiao.model.user.domain.UserBaseInfo;
 import com.qiqiao.model.user.vo.CheckLoginForm;
 import com.qiqiao.model.user.vo.UserBaseInfoToken;
+import com.qiqiao.server.idbuilder.IdBuilderFeignClient;
+import com.qiqiao.tools.common.PasswordUtils;
 import com.qiqiao.tools.common.RandomNameGenerator;
 import com.qiqiao.tools.common.VerificationCodeGenerator;
 import com.qiqiao.tools.user.UserTools;
@@ -27,8 +30,12 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import static com.qiqiao.user.service.impl.PasswordUserLoginServiceImpl.getVoidResult;
 
 /**
  * @author Simon
@@ -41,8 +48,6 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
     @Value("${jwt.secret}")
     private String tokenSecret;
 
-    @Value("${jwt.expiration}")
-    private long tokenExpiration;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckCodeUserLoginServiceImpl.class);
     private static final int SEND_MSG_MAX_TIME = 30;
@@ -60,6 +65,9 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
     @Resource
     private UserBaseInfoMapper userBaseInfoMapper;
 
+    @Resource
+    private IdBuilderFeignClient idBuilderFeignClient;
+
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -76,12 +84,21 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
         String phone = checkLoginForm.getPhone();
         String checkCode = checkLoginForm.getCheckCode();
         //校验手机号
-        if (UserTools.isValidPhone(phone)){
+        if (UserTools.isErrorPhone(phone)){
             return Result.failure(
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getStatusCode(),
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getMessage());
         }
-        if (!UserTools.isValidCheckCode(checkCode)){
+        //检验是否在线
+        JwtUtil jwtUtil = new JwtUtil(tokenSecret);
+        if (redisTemplate.opsForValue().get(RedisFinals.REDIS_USER_LOGIN_TOKEN+jwtUtil.generateToken(phone)) != null){
+            return Result.failure(
+                    ErrorEnums.USER_LOGIN_ONLINE.getStatusCode(),
+                    ErrorEnums.USER_LOGIN_ONLINE.getMessage()
+            );
+        }
+        //检验验证码是否正确
+        if (UserTools.isErrorCheckCode(checkCode)){
             return Result.failure(
                     ErrorEnums.USER_LOGIN_CHECK_CODE_NOT_VALID.getStatusCode(),
                     ErrorEnums.USER_LOGIN_CHECK_CODE_NOT_VALID.getMessage()
@@ -93,47 +110,51 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
         String token = null;
         if (checkCode.equals(phoneValueValue)){
             //校验成功先查数据库是否有该手机号记录
-            QueryWrapper<UserBaseInfo> queryPhoneWrapper = new QueryWrapper<>();
-            queryPhoneWrapper.eq("phone",phone);
-            UserBaseInfo selectInfo = userBaseInfoMapper.selectOne(queryPhoneWrapper);
+            // 查询已删除或未删除状态的用户
+            QueryWrapper<UserBaseInfo> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("phone", phone);
+            UserBaseInfo selectInfo = userBaseInfoMapper.selectOne(queryWrapper);
             UserBaseInfoToken userBaseInfoToken = new UserBaseInfoToken();
             if (selectInfo == null){
                 //封装一个UserBaseInfo基础数据
                 //TODO 后面还会有具体信息表,所以后面还会插入一个具体信息表
                 UserBaseInfo userBaseInfo = new UserBaseInfo();
-                //这里涉及到服务远程调用了,先不写(id应该是雪花id)
-                userBaseInfoToken.setId(1L);
+                //远程调用feignClient
+                Result<Long> buildId = idBuilderFeignClient.getBuildId();
+                //获取加密盐值
+                byte[] secret = null;
+                try{
+                     secret = PasswordUtils.generateSalt();
+                }catch (NoSuchAlgorithmException e){
+                    LOGGER.error("CheckCodeUserServiceImpl:117:Secret Create Error");
+                }
+                String saltString = Base64.getEncoder().encodeToString(secret);
+                Long id = buildId.getData();
+                userBaseInfoToken.setId(id);
                 userBaseInfoToken.setPhone(phone);
                 userBaseInfoToken.setNickName("QQYJ_"+ RandomNameGenerator.generateRandomName());
-                userBaseInfo.setId(1L);
+                userBaseInfo.setId(id);
                 userBaseInfo.setPhone(phone);
-                userBaseInfo.setNiceName("QQYJ_"+ RandomNameGenerator.generateRandomName());
+                userBaseInfo.setNickName("QQYJ_"+ RandomNameGenerator.generateRandomName());
+                userBaseInfo.setSalt(saltString);
                 //插入数据库
                 userBaseInfoMapper.insert(userBaseInfo);
+            }else{
+                if (selectInfo.getIsBan().equals(CommonFinals.IS_BAN)){
+                    return Result.failure(
+                            ErrorEnums.USER_LOGIN_BAN.getStatusCode(),
+                            ErrorEnums.USER_LOGIN_BAN.getMessage()
+                    );
+                }
+                    userBaseInfoToken.setId(selectInfo.getId());
+                    userBaseInfoToken.setIcon(selectInfo.getIcon());
+                    userBaseInfoToken.setNickName(selectInfo.getNickName());
+                    userBaseInfoToken.setWechatNum(selectInfo.getWechatNum());
+                    userBaseInfoToken.setPhone(selectInfo.getPhone());
+
             }
-            Optional.ofNullable(selectInfo)
-                    .ifPresent(s -> {
-                        userBaseInfoToken.setId(s.getId());
-                        userBaseInfoToken.setIcon(s.getIcon());
-                        userBaseInfoToken.setNickName(s.getNiceName());
-                        userBaseInfoToken.setWechatNum(s.getWechatNum());
-                        userBaseInfoToken.setPhone(s.getPhone());
-                    });
             //Token数据体写完就写入redis
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                JwtUtil jwtUtil = new JwtUtil(tokenSecret,tokenExpiration);
-                token = jwtUtil.generateToken(phone);
-                redisTemplate.opsForValue().set(RedisFinals.REDIS_USER_LOGIN_TOKEN+token,
-                        objectMapper.writeValueAsString(userBaseInfoToken),RedisFinals.REDIS_USER_LOGIN_TOKEN_EXPIRE_TIME,
-                        TimeUnit.SECONDS);
-            } catch (JsonProcessingException e) {
-                LOGGER.error("CheckCodeUserServiceImpl:110:User Trans Json Error");
-            }
-            if (token != null) {
-                response.setHeader("Authorization", token);
-            }
-            return Result.successNoData();
+            return getVoidResult(response, phone, jwtUtil, userBaseInfoToken, redisTemplate, LOGGER);
         }
         return Result.failure(
                 ErrorEnums.USER_LOGIN_CHECK_CODE_FAIL.getStatusCode(),
@@ -148,7 +169,7 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
      */
     public Result<Void> sendCheckCode(String phone, HttpServletRequest request){
         //校验手机号的合理性
-        if (UserTools.isValidPhone(phone)) {
+        if (phone == null || UserTools.isErrorPhone(phone)) {
             return Result.failure(
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getStatusCode(),
                     ErrorEnums.USER_LOGIN_CHECK_CODE_PHONE_NOT_VALID.getMessage());
@@ -164,6 +185,7 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
         //校验ip24h发送短信数(去redis)
         String ipNumKey = RedisFinals.REDIS_USER_CHECK_CODE_NUM+ getIpAddress(request);
         String ipNumValue = redisTemplate.opsForValue().get(ipNumKey);
+        Long ipExpire = redisTemplate.getExpire(ipNumKey);
         if (ipNumValue == null || Integer.parseInt(ipNumValue) < IP_MAX_NUM){
             //获取ip锁
             RLock lock = redissonClient.getLock(RedisFinals.REDISSON_USER_CHECK_CODE_LOCK + getIpAddress(request));
@@ -184,7 +206,8 @@ public class CheckCodeUserLoginServiceImpl implements UserLoginService{
                 }else{
                     ipNumValue= String.valueOf(Integer.parseInt(ipNumValue)+1);
                     redisTemplate.opsForValue().set(ipNumKey,ipNumValue,
-                            RedisFinals.REDIS_USER_CHECK_CODE_NUM_EXPIRE,TimeUnit.SECONDS);
+                            Optional.ofNullable(ipExpire).orElse((long) RedisFinals.REDIS_USER_CHECK_CODE_NUM_EXPIRE),TimeUnit.SECONDS
+                    );
                 }
             }else{
                 if (lock.isLocked()){

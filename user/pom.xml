@@ -58,11 +58,19 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
+
+        <dependency>
+            <groupId>com.qiqiao</groupId>
+            <artifactId>server-idbuilder-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>com.qiqiao</groupId>
             <artifactId>model</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
 
 
     </dependencies>

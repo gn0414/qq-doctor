@@ -32,7 +32,7 @@ public class MessageTools {
                 .build();
         SendSmsRequest sendSmsRequest = SendSmsRequest.builder()
                 .signName("企桥医健")
-                .templateCode("SMS_462630145")
+                .templateCode("SMS_464035616")
                 .phoneNumbers(phone)
                 .templateParam("{\"code\":\""+code+"\"}")
                 .build();

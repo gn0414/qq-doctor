@@ -19,7 +19,7 @@ public class IdBuilderController {
 
     /**
      * 雪花Id获取接口
-     * @return
+     * @return Result
      */
     @GetMapping("/snowFlake")
     public Result<Long> getBuildId(){

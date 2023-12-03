@@ -2,14 +2,16 @@ spring:
   application:
     name: hospital-server
   cloud:
+    inetutils:
+      preferred-networks: 10.21.91.245
     nacos:
       config:
         server-addr: 10.21.91.245:8848
         # 命名空间
         file-extension: yaml
         namespace: qq-doctor-dev
-        group: hospital
+        group: qq-doctor-dev
       discovery:
         server-addr: 10.21.91.245:8848
         namespace: qq-doctor-dev
-        group: hospital
+        group: qq-doctor-dev

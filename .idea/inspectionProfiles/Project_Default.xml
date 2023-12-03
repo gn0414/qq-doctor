@@ -6,6 +6,9 @@
         <language minSize="58" name="Java" />
       </Languages>
     </inspection_tool>
+    <inspection_tool class="JavadocDeclaration" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ADDITIONAL_TAGS" value="FeignClient(" />
+    </inspection_tool>
     <inspection_tool class="MavenPackageUpdate" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="excludeList">
         <list>

@@ -1,7 +1,8 @@
 package com.qiqiao.user;
-
-
+import com.qiqiao.server.idbuilder.IdBuilderFeignClient;
 import com.qiqiao.tools.common.MessageTools;
+import com.qiqiao.tools.common.PasswordUtils;
+import com.qiqiao.user.mapper.UserBaseInfoMapper;
 import com.qiqiao.user.service.UserLoginService;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RLock;
@@ -9,6 +10,10 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+
+
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SpringBootTest
 public class LoginTest {
 
+
+    @Autowired
+    IdBuilderFeignClient idBuilderFeignClient;
 
     @Autowired
     RedissonClient redissonClient;
@@ -27,6 +35,14 @@ public class LoginTest {
     private String secret;
     @Autowired
     List<UserLoginService> userLoginServiceList;
+    @Autowired
+    UserBaseInfoMapper userBaseInfoMapper;
+
+    @Test
+    void TestFeign(){
+        System.out.println(idBuilderFeignClient.getBuildId());
+    }
+
     @Test
     void TestClassName(){
         userLoginServiceList.forEach(
@@ -72,4 +88,20 @@ public class LoginTest {
 
         System.out.println("最终结果：" + testNum.get());
     }
+
+    @Test
+    void PasswordCheck() throws NoSuchAlgorithmException {
+        String password = "simon";
+        byte[] salt = PasswordUtils.generateSalt();
+        String dataPassword = PasswordUtils.encryptPassword(password, salt);
+        String saltTrans = Base64.getEncoder().encodeToString(salt);
+        byte[] decodeSalt = Base64.getDecoder().decode(saltTrans);
+        String checkPassword = PasswordUtils.encryptPassword(password,decodeSalt);
+
+        System.out.println(dataPassword);
+        System.out.println(checkPassword);
+        System.out.println(dataPassword.equals(checkPassword));
+
+    }
+
 }

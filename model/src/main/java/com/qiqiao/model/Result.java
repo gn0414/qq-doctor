@@ -1,9 +1,17 @@
 package com.qiqiao.model;
 
+import lombok.Data;
+
+import java.io.Serializable;
+
 /**
  * @author Simon
  */
-public class Result<T> {
+@Data
+public class Result<T> implements Serializable {
+
+    private static final long serialVersionUID = -3258839839160856613L;
+
     private boolean success;
     private int code;
     private String message;
@@ -22,6 +30,7 @@ public class Result<T> {
         this.message = message;
     }
 
+    public Result(){}
 
 
     public static <T> Result<T> success(T data) {

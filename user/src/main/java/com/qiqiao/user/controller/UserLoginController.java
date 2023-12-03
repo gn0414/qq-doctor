@@ -1,10 +1,14 @@
 package com.qiqiao.user.controller;
 
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.qiqiao.model.Result;
 import com.qiqiao.model.user.vo.CheckLoginForm;
+
+import com.qiqiao.user.config.MybatisConfig;
 import com.qiqiao.user.exception.LoginTypeErrorException;
 import com.qiqiao.user.service.UserLoginService;
 import com.qiqiao.user.service.impl.CheckCodeUserLoginServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +22,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 public class UserLoginController {
+
+
+
 
     private final List<UserLoginService> userLoginServiceList;
 

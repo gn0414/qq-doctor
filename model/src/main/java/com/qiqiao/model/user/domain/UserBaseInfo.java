@@ -1,11 +1,7 @@
 package com.qiqiao.model.user.domain;
-
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @author Simon
@@ -24,8 +20,11 @@ public class UserBaseInfo {
     @TableField("password")
     private String password;
 
+    @TableField("salt")
+    private String salt;
+
     @TableField("nick_name")
-    private String niceName;
+    private String nickName;
 
     @TableField("icon")
     private String icon;
@@ -33,11 +32,17 @@ public class UserBaseInfo {
     @TableField("wechat_num")
     private String wechatNum;
 
-    @TableField("creat_time")
-    private Date createTime;
+    @TableField(value = "create_time",fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 
-    @TableField("update_time")
-    private Date updateTime;
+    @TableField(value = "update_time",fill = FieldFill.INSERT_UPDATE,select = false)
+    private LocalDateTime updateTime;
+
+    @TableField(value = "is_ban")
+    private String isBan;
+
+    @TableLogic
+    private String isDelete;
 
 
 }

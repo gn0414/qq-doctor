@@ -15,7 +15,7 @@ public class UserTools {
      * @param phone 手机号
      * @return boolean
      */
-    public static boolean isValidPhone(String phone) {
+    public static boolean isErrorPhone(String phone) {
         return !PHONE_PATTERN.matcher(phone).matches();
     }
 
@@ -24,8 +24,8 @@ public class UserTools {
      * @param input 输入
      * @return 校验验6位数字验证码
      */
-    public static boolean isValidCheckCode(String input) {
-        return input.matches("\\d{6}");
+    public static boolean isErrorCheckCode(String input) {
+        return !input.matches("\\d{6}");
     }
 
 }
